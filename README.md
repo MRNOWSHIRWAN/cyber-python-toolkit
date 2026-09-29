@@ -13,9 +13,17 @@ python monitor.py
 
 --log alerts.jsonl saves alert metadata only (UTC time, burst duration, press count, keys/sec). No characters, key names, passwords or screenshots are saved. Log files get owner-only permissions.
 
+## Configuring the rule
+
+The detection thresholds are CLI flags, so the rule can be tuned without editing source:
+
+python monitor.py --demo --min-keys 8 --min-rate 25
+
+--window sets the sliding window length in seconds (default 0.75), --min-keys the presses required inside it (default 12), --min-rate the alerting speed in presses per second (default 18.0), and --cooldown the seconds repeat alerts are suppressed (default 3.0). The active rule prints at startup.
+
 ## How it works
 
-Each key press is timestamped with a monotonic clock; a sliding-window detector flags 12+ presses within 0.75s at 18+ presses/sec, with a 3s cooldown. Key identity is discarded immediately. --demo runs synthetic timestamps without keyboard access.
+Each key press is timestamped with a monotonic clock; a sliding-window detector flags 12+ presses within 0.75s at 18+ presses/sec, with a 3s cooldown (all four values configurable, see above). Key identity is discarded immediately. --demo runs synthetic timestamps without keyboard access.
 
 ## Limits
 
@@ -23,4 +31,4 @@ Fast bursts can be legitimate macros or automation; slow staged injection can ev
 
 ## Next steps
 
-Test on real systems, measure false positives, make the rule configurable, improve alert presentation. A detection is not forensic proof.
+Test on real systems, measure false positives, improve alert presentation. A detection is not forensic proof.
