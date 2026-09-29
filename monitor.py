@@ -11,6 +11,22 @@ import time
 from detector import BurstDetector
 
 
+def build_detector(args):
+    """Create a BurstDetector from parsed CLI arguments."""
+    return BurstDetector(
+        window_seconds=args.window,
+        min_keys=args.min_keys,
+        min_rate=args.min_rate,
+        cooldown_seconds=args.cooldown,
+    )
+
+
+def describe_rule(args):
+    """Human-readable summary of the active detection rule."""
+    return (f"Rule: {args.min_keys}+ presses within {args.window}s at "
+            f"{args.min_rate}+ keys/sec, {args.cooldown}s cooldown.")
+
+
 def write_alert(alert, destination):
     record = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -30,8 +46,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Opt-in timing-only typing burst monitor")
     parser.add_argument("--log", type=Path, help="write alert metadata as JSON Lines; no keystrokes")
     parser.add_argument("--demo", action="store_true", help="run synthetic timestamps without a keyboard listener")
+    parser.add_argument("--window", type=float, default=0.75,
+                        help="sliding window length in seconds (default: 0.75)")
+    parser.add_argument("--min-keys", type=int, default=12,
+                        help="presses required inside the window (default: 12)")
+    parser.add_argument("--min-rate", type=float, default=18.0,
+                        help="minimum presses per second to alert (default: 18.0)")
+    parser.add_argument("--cooldown", type=float, default=3.0,
+                        help="seconds to suppress repeats after an alert (default: 3.0)")
     args = parser.parse_args(argv)
-    detector = BurstDetector()
+    try:
+        detector = build_detector(args)
+    except ValueError as exc:
+        parser.error(f"invalid rule settings: {exc}")
+    print(describe_rule(args), flush=True)
     if args.demo:
         for i in range(15):
             alert = detector.observe(i * 0.03)
