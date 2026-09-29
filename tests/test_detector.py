@@ -29,6 +29,24 @@ class BurstDetectorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             detector.observe(1.0)
 
+    def test_custom_thresholds_change_alerting(self):
+        # Six presses at 20 keys/sec: defaults stay silent, a looser rule flags it.
+        default = BurstDetector()
+        loose = BurstDetector(min_keys=6, min_rate=10.0)
+        stamps = [i * 0.05 for i in range(6)]
+        self.assertTrue(all(default.observe(t) is None for t in stamps))
+        self.assertIsNotNone([loose.observe(t) for t in stamps][-1])
+
+    def test_invalid_config_rejected(self):
+        with self.assertRaises(ValueError):
+            BurstDetector(window_seconds=0)
+        with self.assertRaises(ValueError):
+            BurstDetector(min_keys=1)
+        with self.assertRaises(ValueError):
+            BurstDetector(min_rate=0)
+        with self.assertRaises(ValueError):
+            BurstDetector(cooldown_seconds=-0.5)
+
 
 if __name__ == "__main__":
     unittest.main()
